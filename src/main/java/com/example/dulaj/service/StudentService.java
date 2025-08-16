@@ -15,55 +15,49 @@ public class StudentService {
     @Autowired
     private StudentRepo studentRepo;
 
-    // CREATE: අලුත් ශිෂ්‍යයෙක්ව එකතු කරනවා
-    public StudentDTO saveStudent(StudentDTO studentDTO) {
-        Student student = new Student();
-        student.setFirstName(studentDTO.getFirstName());
-        student.setLastName(studentDTO.getLastName());
-        student.setEmail(studentDTO.getEmail());
-        student.setAge(studentDTO.getAge());
-        student.setContactNo(studentDTO.getContactNo());
-
-        Student savedStudent = studentRepo.save(student);
-
-        studentDTO.setId(savedStudent.getId());
-        return studentDTO;
+    // ---------------- DTO <-> Entity conversion helpers ----------------
+    private StudentDTO convertToDTO(Student student) {
+        StudentDTO dto = new StudentDTO();
+        dto.setId(student.getId());
+        dto.setFirstName(student.getFirstName());
+        dto.setLastName(student.getLastName());
+        dto.setEmail(student.getEmail());
+        dto.setAge(student.getAge());
+        dto.setContactNo(student.getContactNo());
+        return dto;
     }
 
-    // READ: ඉන්න හැම ශිෂ්‍යයෙක්ගෙම විස්තර ගන්නවා
+    private Student convertToEntity(StudentDTO dto) {
+        Student student = new Student();
+        student.setId(dto.getId()); // may be null for new student
+        student.setFirstName(dto.getFirstName());
+        student.setLastName(dto.getLastName());
+        student.setEmail(dto.getEmail());
+        student.setAge(dto.getAge());
+        student.setContactNo(dto.getContactNo());
+        return student;
+    }
+
+    // ---------------- Service methods ----------------
+
+    public StudentDTO createStudent(StudentDTO studentDTO) {
+        Student student = convertToEntity(studentDTO);
+        Student savedStudent = studentRepo.save(student);
+        return convertToDTO(savedStudent);
+    }
+
     public List<StudentDTO> getAllStudents() {
         List<Student> students = studentRepo.findAll();
         return students.stream()
-                .map(student -> {
-                    StudentDTO dto = new StudentDTO();
-                    dto.setId(student.getId());
-                    dto.setFirstName(student.getFirstName());
-                    dto.setLastName(student.getLastName());
-                    dto.setEmail(student.getEmail());
-                    dto.setAge(student.getAge());
-                    dto.setContactNo(student.getContactNo());
-                    return dto;
-                })
+                .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
-    // READ: ID එකෙන් ශිෂ්‍යයෙක්ව හොයනවා
     public StudentDTO getStudentByID(long id) {
         Student student = studentRepo.findById(id).orElse(null);
-        if (student != null) {
-            StudentDTO dto = new StudentDTO();
-            dto.setId(student.getId());
-            dto.setFirstName(student.getFirstName());
-            dto.setLastName(student.getLastName());
-            dto.setEmail(student.getEmail());
-            dto.setAge(student.getAge());
-            dto.setContactNo(student.getContactNo());
-            return dto;
-        }
-        return null;
+        return (student != null) ? convertToDTO(student) : null;
     }
 
-    // UPDATE: ශිෂ්‍යයෙක්ගේ විස්තර අලුත් කරනවා
     public StudentDTO updateStudent(long id, StudentDTO studentDTO) {
         Student existingStudent = studentRepo.findById(id).orElse(null);
         if (existingStudent != null) {
@@ -74,20 +68,11 @@ public class StudentService {
             existingStudent.setContactNo(studentDTO.getContactNo());
 
             Student updatedStudent = studentRepo.save(existingStudent);
-
-            StudentDTO updatedDTO = new StudentDTO();
-            updatedDTO.setId(updatedStudent.getId());
-            updatedDTO.setFirstName(updatedStudent.getFirstName());
-            updatedDTO.setLastName(updatedStudent.getLastName());
-            updatedDTO.setEmail(updatedStudent.getEmail());
-            updatedDTO.setAge(updatedStudent.getAge());
-            updatedDTO.setContactNo(updatedStudent.getContactNo());
-            return updatedDTO;
+            return convertToDTO(updatedStudent);
         }
         return null;
     }
 
-    // DELETE: ශිෂ්‍යයෙක්ව මකනවා
     public boolean deleteStudent(long id) {
         if (studentRepo.existsById(id)) {
             studentRepo.deleteById(id);

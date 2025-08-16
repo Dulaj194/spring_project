@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface StudentRepo extends JpaRepository<Student, Long> {
-    // විශේෂිත query අවශ්‍ය නම් මෙතන ලියන්න පුළුවන්
+
 }
